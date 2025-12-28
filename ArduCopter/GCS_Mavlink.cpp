@@ -483,6 +483,19 @@ const AP_Param::GroupInfo GCS_MAVLINK_Parameters::var_info[] = {
     // @RebootRequired: True
     // @User: Advanced
     AP_GROUPINFO("ADSB",   9, GCS_MAVLINK_Parameters, streamRates[9],  0),
+    // @Param: OVR_TRG_CH
+    // @DisplayName: Override Trigger Channel
+    // @Description: Channel to activate algorithm override (0 to disable).
+    // @Values: 0:Disabled, 5:Ch5, 6:Ch6, 7:Ch7, 8:Ch8, 9:Ch9, 10:Ch10, 11:Ch11, 12:Ch12
+    // @User: Advanced
+    AP_GROUPINFO("OVR_TRG_CH", 10, GCS_MAVLINK_Parameters, _ovr_trg_ch, 0),
+
+    // @Param: OVR_TRG_PWM
+    // @DisplayName: Override Trigger PWM Threshold
+    // @Description: PWM value above which the override is activated.
+    // @Range: 1000 2000
+    // @User: Advanced
+    AP_GROUPINFO("OVR_TRG_PWM", 11, GCS_MAVLINK_Parameters, _ovr_trg_pwm, 1600),
 AP_GROUPEND
 };
 
