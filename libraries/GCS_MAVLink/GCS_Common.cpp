@@ -3996,56 +3996,44 @@ void GCS_MAVLINK::handle_rc_channels_override(const mavlink_message_t &msg)
     mavlink_rc_channels_override_t packet;
     mavlink_msg_rc_channels_override_decode(&msg, &packet);
 
-    // =========================================================================
-    // ПОЧАТОК МОДИФІКАЦІЇ
-    // =========================================================================
-
-    const uint8_t chan_idx = chan - MAVLINK_COMM_0;
+    uint8_t chan_idx = chan - MAVLINK_COMM_0;
 
     if (chan_idx < MAVLINK_COMM_NUM_BUFFERS) {
 
-        // 1. Читаємо параметри
         const int8_t trigger_ch = gcs().get_params(chan_idx)._ovr_trg_ch.get();
-        const int16_t trigger_threshold = gcs().get_params(chan_idx)._ovr_trg_pwm.get();
+        const int16_t trigger_thresh = gcs().get_params(chan_idx)._ovr_trg_pwm.get();
 
-        // Працюємо тільки якщо функція активна
         if (trigger_ch > 0) {
-            uint16_t trigger_val = 0;
+            uint16_t current_pwm = 0;
 
-            // 2. Отримуємо поточне значення з пакету
             switch (trigger_ch) {
-                case 1: trigger_val = packet.chan1_raw; break;
-                case 2: trigger_val = packet.chan2_raw; break;
-                case 3: trigger_val = packet.chan3_raw; break;
-                case 4: trigger_val = packet.chan4_raw; break;
-                case 5: trigger_val = packet.chan5_raw; break;
-                case 6: trigger_val = packet.chan6_raw; break;
-                case 7: trigger_val = packet.chan7_raw; break;
-                case 8: trigger_val = packet.chan8_raw; break;
-                case 9: trigger_val = packet.chan9_raw; break;
-                case 10: trigger_val = packet.chan10_raw; break;
-                case 11: trigger_val = packet.chan11_raw; break;
-                case 12: trigger_val = packet.chan12_raw; break;
-                case 13: trigger_val = packet.chan13_raw; break;
-                case 14: trigger_val = packet.chan14_raw; break;
-                case 15: trigger_val = packet.chan15_raw; break;
-                case 16: trigger_val = packet.chan16_raw; break;
-                default: trigger_val = 0; break;
+                case 1: current_pwm = packet.chan1_raw; break;
+                case 2: current_pwm = packet.chan2_raw; break;
+                case 3: current_pwm = packet.chan3_raw; break;
+                case 4: current_pwm = packet.chan4_raw; break;
+                case 5: current_pwm = packet.chan5_raw; break;
+                case 6: current_pwm = packet.chan6_raw; break;
+                case 7: current_pwm = packet.chan7_raw; break;
+                case 8: current_pwm = packet.chan8_raw; break;
+                case 9: current_pwm = packet.chan9_raw; break;
+                case 10: current_pwm = packet.chan10_raw; break;
+                case 11: current_pwm = packet.chan11_raw; break;
+                case 12: current_pwm = packet.chan12_raw; break;
+                case 13: current_pwm = packet.chan13_raw; break;
+                case 14: current_pwm = packet.chan14_raw; break;
+                case 15: current_pwm = packet.chan15_raw; break;
+                case 16: current_pwm = packet.chan16_raw; break;
+                default: current_pwm = 0; break;
             }
 
-            // 3. Порівнюємо з НАЛАШТОВАНИМ порогом (замість 1800)
-            if (trigger_val > trigger_threshold) {
-                // "Глушимо" джойстик -> Керування переходить на RCIN
-                packet.chan1_raw = 0;
-                packet.chan2_raw = 0;
-                packet.chan3_raw = 0;
-                packet.chan4_raw = 0;
+            if (current_pwm > trigger_thresh) {
+                packet.chan1_raw = 0; // Release Roll
+                packet.chan2_raw = 0; // Release Pitch
+                packet.chan3_raw = 0; // Release Throttle
+                packet.chan4_raw = 0; // Release Yaw
             }
         }
     }
-    // =========================================================================
-    // КІНЕЦЬ МОДИФІКАЦІЇ
-    // =========================================================================
 
     const uint16_t override_data[] = {
         packet.chan1_raw,

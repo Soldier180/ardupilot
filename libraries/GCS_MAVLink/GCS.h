@@ -112,8 +112,8 @@ public:
     GCS_MAVLINK_Parameters();
 
     static const struct AP_Param::GroupInfo        var_info[];
-    AP_Int8         _ovr_trg_ch;  // Канал
-    AP_Int16        _ovr_trg_pwm; // Поріг (PWM)
+    AP_Int8         _ovr_trg_ch;
+    AP_Int16        _ovr_trg_pwm;
     // saveable rate of each stream
     AP_Int16        streamRates[GCS_MAVLINK_NUM_STREAM_RATES];
 };
@@ -1150,11 +1150,10 @@ public:
     static class GCS *get_singleton() {
         return _singleton;
     }
-
+    GCS_MAVLINK_Parameters &get_params(uint8_t i) { return chan_parameters[i]; }
     virtual uint32_t custom_mode() const = 0;
     virtual MAV_TYPE frame_type() const = 0;
     virtual const char* frame_string() const { return nullptr; }
-    GCS_MAVLINK_Parameters &get_params(uint8_t i) { return chan_parameters[i]; }
 
     struct statustext_t {
         mavlink_statustext_t    msg;

@@ -1233,6 +1233,19 @@ const AP_Param::GroupInfo ParametersG2::var_info2[] = {
     AP_GROUPINFO("FS_EKF_FILT", 8, ParametersG2, fs_ekf_filt_hz, FS_EKF_FILT_DEFAULT),
 
     // ID 62 is reserved for the AP_SUBGROUPEXTENSION
+    // @Param: OVR_TRG_CH
+    // @DisplayName: Override Trigger Channel
+    // @Description: Channel to activate algorithm override (0 to disable).
+    // @Values: 0:Disabled, 5:Ch5, 6:Ch6, 7:Ch7, 8:Ch8, 9:Ch9, 10:Ch10, 11:Ch11, 12:Ch12
+    // @User: Advanced
+AP_GROUPINFO("OVR_TRG_CH", 9, ParametersG2, ovr_trg_ch, 0),
+
+    // @Param: OVR_TRG_PWM
+    // @DisplayName: Override Trigger PWM Threshold
+    // @Description: PWM value above which the override is activated.
+    // @Range: 1000 2000
+    // @User: Advanced
+AP_GROUPINFO("OVR_TRG_PWM", 10, ParametersG2, ovr_trg_pwm, 1600),
 
     AP_GROUPEND
 };

@@ -492,6 +492,9 @@ class ParametersG2 {
 public:
     ParametersG2(void);
 
+    AP_Int8 ovr_trg_ch;
+    AP_Int16 ovr_trg_pwm;
+
     // var_info for holding Parameter information
     static const struct AP_Param::GroupInfo var_info[];
     static const struct AP_Param::GroupInfo var_info2[];
