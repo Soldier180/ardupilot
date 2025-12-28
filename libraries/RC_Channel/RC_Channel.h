@@ -460,7 +460,8 @@ public:
     friend class RC_Channel;
     // constructor
     RC_Channels(void);
-
+    AP_Int8 _ovr_trg_ch;
+    AP_Int16 _ovr_trg_pwm;
     void init(void);
 
     // get singleton instance

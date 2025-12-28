@@ -22,3 +22,6 @@ cp -r CubeOrange /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot
 
 cp -r /home/art/ardupilot/build/speedybeef4v3/bin /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/bin/speedybeef4v3
 cp -r /home/art/ardupilot/build/TBS_LUCID_H7/bin /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/bin/TBS_LUCID_H7
+
+cp -r  /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/libraries .
+cp -r  /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/ArduCopter

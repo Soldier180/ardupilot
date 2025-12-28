@@ -4000,9 +4000,9 @@ void GCS_MAVLINK::handle_rc_channels_override(const mavlink_message_t &msg)
 
     if (chan_idx < MAVLINK_COMM_NUM_BUFFERS) {
 
-        const int8_t trigger_ch = gcs().get_params(chan_idx)._ovr_trg_ch.get();
-        const int16_t trigger_thresh = gcs().get_params(chan_idx)._ovr_trg_pwm.get();
 
+        const int8_t trigger_ch = rc()._ovr_trg_ch.get();
+        const int16_t trigger_thresh = rc()._ovr_trg_pwm.get();
         if (trigger_ch > 0) {
             uint16_t current_pwm = 0;
 

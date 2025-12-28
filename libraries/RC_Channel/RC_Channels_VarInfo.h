@@ -112,6 +112,20 @@ const AP_Param::GroupInfo RC_Channels::var_info[] = {
     // @Units: s
     AP_GROUPINFO_FRAME("_FS_TIMEOUT", 35, RC_CHANNELS_SUBCLASS, _fs_timeout, 1.0, AP_PARAM_FRAME_COPTER),
 
+// @Param: OVR_TRG_CH
+        // @DisplayName: Override Trigger Channel
+        // @Description: RC Channel to activate MAVLink override blocking (0 to disable).
+        // @Values: 0:Disabled, 6:Ch6, 7:Ch7, 8:Ch8
+        // @User: Advanced
+    AP_GROUPINFO("_OVR_TRG_CH", 36, RC_CHANNELS_SUBCLASS, _ovr_trg_ch, 0),
+
+        // @Param: OVR_TRG_PWM
+        // @DisplayName: Override Trigger PWM Threshold
+        // @Description: PWM value above which the override is activated.
+        // @Range: 1000 2000
+        // @User: Advanced
+    AP_GROUPINFO("_OVR_TRG_PWM", 37, RC_CHANNELS_SUBCLASS, _ovr_trg_pwm, 1600),
+
     AP_GROUPEND
 };
 

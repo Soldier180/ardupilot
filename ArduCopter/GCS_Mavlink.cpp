@@ -488,14 +488,7 @@ const AP_Param::GroupInfo GCS_MAVLINK_Parameters::var_info[] = {
     // @Description: Channel to activate algorithm override (0 to disable).
     // @Values: 0:Disabled, 8:Ch8, 12:Ch12
     // @User: Advanced
-AP_GROUPINFO("OVR_TRG_CH", 10, GCS_MAVLINK_Parameters, _ovr_trg_ch, 0),
 
-    // @Param: OVR_TRG_PWM
-    // @DisplayName: Override Trigger PWM Threshold
-    // @Description: PWM value above which the override is activated.
-    // @Range: 1000 2000
-    // @User: Advanced
-AP_GROUPINFO("OVR_TRG_PWM", 11, GCS_MAVLINK_Parameters, _ovr_trg_pwm, 1600),
 AP_GROUPEND
 };
 
