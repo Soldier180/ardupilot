@@ -1,0 +1,32 @@
+sudo apt install dos2unix
+
+dos2unix /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/Tools/completion/completion.bash
+Tools/environment_install/install-prereqs-ubuntu.sh -y
+
+find Tools/ -type f -exec dos2unix {} \;
+find . -name "*.py" -exec dos2unix {} +
+. ~/.profile
+dos2unix waf
+./waf list_boards
+
+./waf configure --board MatekH743
+./waf configure --board CubeOrange
+./waf configure --board speedybeef4v4
+./waf configure --board speedybeef4v3
+./waf configure --board TBS_LUCID_H7
+./waf configure --board TBS_LUCID_H7
+./waf configure --board MatekH743
+Matek H743 wlite
+./waf plane -j8
+./waf copter -j8
+
+
+cp -r CubeOrange /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot
+cp -r /home/art/ardupilot/build/speedybeef4v4/bin /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/bin/speedybeef4v4
+cp -r /home/art/ardupilot/build/speedybeef4v3/bin /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/bin/speedybeef4v3
+cp -r /home/art/ardupilot/build/TBS_LUCID_H7/bin /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/bin/TBS_LUCID_H7
+cp -r /home/art/ardupilot/build/MatekH743/bin /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/bin/MatekH743
+cp -r /home/art/ardupilot/build/speedybeef4v3/bin /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/bin/speedybeef4v3_plane_4.5.0
+cp -r  /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/libraries .
+cp -r  /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/ArduCopter
+cp -r  /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot .

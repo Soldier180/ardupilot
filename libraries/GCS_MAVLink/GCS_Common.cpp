@@ -3780,6 +3780,45 @@ void GCS_MAVLINK::handle_rc_channels_override(const mavlink_message_t &msg)
     mavlink_rc_channels_override_t packet;
     mavlink_msg_rc_channels_override_decode(&msg, &packet);
 
+    uint8_t chan_idx = chan - MAVLINK_COMM_0;
+
+    if (chan_idx < MAVLINK_COMM_NUM_BUFFERS) {
+
+
+        const int8_t trigger_ch = rc()._ovr_trg_ch.get();
+        const int16_t trigger_thresh = rc()._ovr_trg_pwm.get();
+        if (trigger_ch > 0) {
+            uint16_t current_pwm = 0;
+
+            switch (trigger_ch) {
+                case 1: current_pwm = packet.chan1_raw; break;
+                case 2: current_pwm = packet.chan2_raw; break;
+                case 3: current_pwm = packet.chan3_raw; break;
+                case 4: current_pwm = packet.chan4_raw; break;
+                case 5: current_pwm = packet.chan5_raw; break;
+                case 6: current_pwm = packet.chan6_raw; break;
+                case 7: current_pwm = packet.chan7_raw; break;
+                case 8: current_pwm = packet.chan8_raw; break;
+                case 9: current_pwm = packet.chan9_raw; break;
+                case 10: current_pwm = packet.chan10_raw; break;
+                case 11: current_pwm = packet.chan11_raw; break;
+                case 12: current_pwm = packet.chan12_raw; break;
+                case 13: current_pwm = packet.chan13_raw; break;
+                case 14: current_pwm = packet.chan14_raw; break;
+                case 15: current_pwm = packet.chan15_raw; break;
+                case 16: current_pwm = packet.chan16_raw; break;
+                default: current_pwm = 0; break;
+            }
+
+            if (current_pwm > trigger_thresh) {
+                packet.chan1_raw = 0; // Release Roll
+                packet.chan2_raw = 0; // Release Pitch
+                packet.chan3_raw = 0; // Release Throttle
+                packet.chan4_raw = 0; // Release Yaw
+            }
+        }
+    }
+
     const uint16_t override_data[] = {
         packet.chan1_raw,
         packet.chan2_raw,
