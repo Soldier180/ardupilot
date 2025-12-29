@@ -19,7 +19,7 @@ dos2unix waf
 
 
 cp -r CubeOrange /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot
-
+cp -r /home/art/ardupilot/build/speedybeef4v4/bin /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/bin/speedybeef4v4
 cp -r /home/art/ardupilot/build/speedybeef4v3/bin /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/bin/speedybeef4v3
 cp -r /home/art/ardupilot/build/TBS_LUCID_H7/bin /mnt/d/MOLFARTECH/DRONES/FPV_DRONES/PROD/ardupilot/bin/TBS_LUCID_H7
 
