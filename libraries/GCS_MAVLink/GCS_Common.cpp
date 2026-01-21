@@ -105,7 +105,13 @@ extern AP_IOMCU iomcu;
 #endif
 
 #include <ctype.h>
-
+// ==========================================================================
+// [SHADOW CACHE] Глобальний буфер для джойстика GCS
+// Зберігає "сирі" дані до того, як вони будуть заблоковані логікою атаки.
+// ==========================================================================
+static uint16_t g_last_gcs_sticks[18] = {0}; // Кеш для 18 каналів
+static uint32_t g_last_gcs_ms = 0;           // Час останнього отримання пакету
+// ==========================================================================
 extern const AP_HAL::HAL& hal;
 
 struct GCS_MAVLINK::LastRadioStatus GCS_MAVLINK::last_radio_status;
@@ -1984,39 +1990,60 @@ void GCS_MAVLINK::send_system_time() const
 /*
   send RC_CHANNELS messages
  */
+/*
+  send RC_CHANNELS messages
+  [MODIFIED] Реалізує підміну даних (Telemetry Injection)
+  Якщо GCS активний, ми шлемо його дані в телеметрію, навіть якщо дрон летить по CRSF.
+ */
 void GCS_MAVLINK::send_rc_channels() const
 {
     uint16_t values[18] = {};
+
+    // 1. Спочатку читаємо реальний стан системи (те, що йде на міксер)
     rc().get_radio_in(values, ARRAY_SIZE(values));
 
+    // 2. [INJECTION] Підміна даних даними з джойстика
+    const uint32_t tnow = AP_HAL::millis();
+
+    // Якщо дані з джойстика свіжі (< 2000 мс)
+    if (tnow - g_last_gcs_ms < 2000) {
+        for (uint8_t i = 0; i < 18; i++) {
+            // Якщо в кеші є валідне значення (не 0), підставляємо його в телеметрію.
+            // Це дозволяє OBC бачити рухи джойстика, навіть коли керування у OBC.
+            if (g_last_gcs_sticks[i] > 800) {
+                values[i] = g_last_gcs_sticks[i];
+            }
+        }
+    }
+
     mavlink_msg_rc_channels_send(
-        chan,
-        AP_HAL::millis(),
-        RC_Channels::get_valid_channel_count(),
-        values[0],
-        values[1],
-        values[2],
-        values[3],
-        values[4],
-        values[5],
-        values[6],
-        values[7],
-        values[8],
-        values[9],
-        values[10],
-        values[11],
-        values[12],
-        values[13],
-        values[14],
-        values[15],
-        values[16],
-        values[17],
+            chan,
+            tnow,
+            RC_Channels::get_valid_channel_count(),
+            values[0],
+            values[1],
+            values[2],
+            values[3],
+            values[4],
+            values[5],
+            values[6],
+            values[7],
+            values[8],
+            values[9],
+            values[10],
+            values[11],
+            values[12],
+            values[13],
+            values[14],
+            values[15],
+            values[16],
+            values[17],
 #if AP_RSSI_ENABLED
-        receiver_rssi()
+            receiver_rssi()
 #else
-        255  // meaning "unknown"
+            255
 #endif
-        );
+    );
 }
 
 bool GCS_MAVLINK::sending_mavlink1() const
@@ -2028,9 +2055,9 @@ void GCS_MAVLINK::send_rc_channels_raw() const
 {
     // for mavlink1 send RC_CHANNELS_RAW, for compatibility with OSD
     // implementations
-    if (!sending_mavlink1()) {
-        return;
-    }
+//    if (!sending_mavlink1()) {
+//        return;
+//    }
 
     uint16_t values[8] = {};
     rc().get_radio_in(values, ARRAY_SIZE(values));
@@ -3769,10 +3796,12 @@ void GCS_MAVLINK::handle_command_ack(const mavlink_message_t &msg)
 
 // allow override of RC channel values for complete GCS
 // control of switch position and RC PWM values.
+// [MODIFIED] handle_rc_channels_override
+// Реалізує логіку перехоплення керування при активації "Атаки"
 void GCS_MAVLINK::handle_rc_channels_override(const mavlink_message_t &msg)
 {
     if(msg.sysid != sysid_my_gcs()) {
-        return; // Only accept control from our gcs
+        return;
     }
 
     const uint32_t tnow = AP_HAL::millis();
@@ -3780,83 +3809,108 @@ void GCS_MAVLINK::handle_rc_channels_override(const mavlink_message_t &msg)
     mavlink_rc_channels_override_t packet;
     mavlink_msg_rc_channels_override_decode(&msg, &packet);
 
-    uint8_t chan_idx = chan - MAVLINK_COMM_0;
+    // ==========================================================================
+    // КРОК 1: ЗБЕРЕЖЕННЯ В КЕШ (SHADOWING)
+    // ==========================================================================
+    // Зберігаємо дані в глобальний масив ДО будь-якої логіки блокування.
+    // Це гарантує, що телеметрія завжди отримує чисті дані.
 
-    if (chan_idx < MAVLINK_COMM_NUM_BUFFERS) {
-
-
-        const int8_t trigger_ch = rc()._ovr_trg_ch.get();
-        const int16_t trigger_thresh = rc()._ovr_trg_pwm.get();
-        if (trigger_ch > 0) {
-            uint16_t current_pwm = 0;
-
-            switch (trigger_ch) {
-                case 1: current_pwm = packet.chan1_raw; break;
-                case 2: current_pwm = packet.chan2_raw; break;
-                case 3: current_pwm = packet.chan3_raw; break;
-                case 4: current_pwm = packet.chan4_raw; break;
-                case 5: current_pwm = packet.chan5_raw; break;
-                case 6: current_pwm = packet.chan6_raw; break;
-                case 7: current_pwm = packet.chan7_raw; break;
-                case 8: current_pwm = packet.chan8_raw; break;
-                case 9: current_pwm = packet.chan9_raw; break;
-                case 10: current_pwm = packet.chan10_raw; break;
-                case 11: current_pwm = packet.chan11_raw; break;
-                case 12: current_pwm = packet.chan12_raw; break;
-                case 13: current_pwm = packet.chan13_raw; break;
-                case 14: current_pwm = packet.chan14_raw; break;
-                case 15: current_pwm = packet.chan15_raw; break;
-                case 16: current_pwm = packet.chan16_raw; break;
-                default: current_pwm = 0; break;
-            }
-
-            if (current_pwm > trigger_thresh) {
-                packet.chan1_raw = 0; // Release Roll
-                packet.chan2_raw = 0; // Release Pitch
-                packet.chan3_raw = 0; // Release Throttle
-                packet.chan4_raw = 0; // Release Yaw
-            }
-        }
-    }
-
-    const uint16_t override_data[] = {
-        packet.chan1_raw,
-        packet.chan2_raw,
-        packet.chan3_raw,
-        packet.chan4_raw,
-        packet.chan5_raw,
-        packet.chan6_raw,
-        packet.chan7_raw,
-        packet.chan8_raw,
-        packet.chan9_raw,
-        packet.chan10_raw,
-        packet.chan11_raw,
-        packet.chan12_raw,
-        packet.chan13_raw,
-        packet.chan14_raw,
-        packet.chan15_raw,
-        packet.chan16_raw
+    // Допоміжний масив для зручності
+    const uint16_t raw_input[18] = {
+            packet.chan1_raw, packet.chan2_raw, packet.chan3_raw, packet.chan4_raw,
+            packet.chan5_raw, packet.chan6_raw, packet.chan7_raw, packet.chan8_raw,
+            packet.chan9_raw, packet.chan10_raw, packet.chan11_raw, packet.chan12_raw,
+            packet.chan13_raw, packet.chan14_raw, packet.chan15_raw, packet.chan16_raw,
+            packet.chan17_raw, packet.chan18_raw
     };
 
-    for (uint8_t i=0; i<8; i++) {
-        // Per MAVLink spec a value of UINT16_MAX means to ignore this field.
-        if (override_data[i] != UINT16_MAX) {
-            RC_Channels::set_override(i, override_data[i], tnow);
+    for (uint8_t i = 0; i < 18; i++) {
+        // Зберігаємо тільки якщо це валідні PWM дані або 0 (центр)
+        if (raw_input[i] != UINT16_MAX) {
+            g_last_gcs_sticks[i] = raw_input[i];
         }
     }
-    for (uint8_t i=8; i<ARRAY_SIZE(override_data); i++) {
-        // Per MAVLink spec a value of zero or UINT16_MAX means to
-        // ignore this field.
-        if (override_data[i] != 0 && override_data[i] != UINT16_MAX) {
-            // per the mavlink spec, a value of UINT16_MAX-1 means
-            // return the field to RC radio values:
-            const uint16_t value = override_data[i] == (UINT16_MAX-1) ? 0 : override_data[i];
-            RC_Channels::set_override(i, value, tnow);
+    g_last_gcs_ms = tnow;
+
+    // ==========================================================================
+    // КРОК 2: ЛОГІКА ТРИГЕРА (АТАКА)
+    // ==========================================================================
+
+    // Отримуємо параметри тригера з налаштувань (Full Parameter List)
+    // GCS_OVR_TRG_CH (канал, 1-18) та GCS_OVR_TRG_PWM (поріг, напр. 1700)
+    int8_t trigger_ch = rc()._ovr_trg_ch.get();
+    const int16_t trigger_thresh = rc()._ovr_trg_pwm.get();
+
+    // [ЗАХИСТ] Якщо параметр GCS_OVR_TRG_CH = 0 (не налаштовано),
+    // форсуємо використання 8-го каналу для тестування!
+    if (trigger_ch == 0) {
+        trigger_ch = 8;
+    }
+
+    bool is_attack_mode = false;
+
+    if (trigger_ch > 0 && trigger_ch <= 18) {
+        // Перевіряємо значення на каналі тригера.
+        // Беремо з КЕШУ (g_last_gcs_sticks), бо це найнадійніше джерело.
+        // trigger_ch йде з 1, масив з 0.
+        uint16_t pwm_on_trigger = g_last_gcs_sticks[trigger_ch - 1];
+
+        if (pwm_on_trigger > trigger_thresh) {
+            is_attack_mode = true;
         }
     }
 
+    // [DEBUG] Виводимо повідомлення в HUD Mission Planner (не частіше раз на 2с)
+    static uint32_t last_debug_msg = 0;
+    if (is_attack_mode && (tnow - last_debug_msg > 2000)) {
+        send_text(MAV_SEVERITY_NOTICE, "ATTACK ON: GCS Blocked, Using RC_IN (CRSF)");
+        last_debug_msg = tnow;
+    }
+
+    // ==========================================================================
+    // КРОК 3: ПІДГОТОВКА ДАНИХ ДЛЯ МОТОРІВ
+    // ==========================================================================
+
+    // Створюємо масив значень, які підуть на Override
+    uint16_t target_override[18];
+    for(int i=0; i<18; i++) target_override[i] = raw_input[i];
+
+    if (is_attack_mode) {
+        // [КРИТИЧНО] Якщо атака активна, ми ПРИМУСОВО ставимо 0
+        // на канали керування (Roll, Pitch, Thr, Yaw).
+        // 0 означає "Release Control" -> ArduPilot почне слухати RC_IN (CRSF).
+        target_override[0] = 0; // Roll
+        target_override[1] = 0; // Pitch
+        target_override[2] = 0; // Throttle
+        target_override[3] = 0; // Yaw
+    }
+
+    // ==========================================================================
+    // КРОК 4: ЗАСТОСУВАННЯ OVERRIDE
+    // ==========================================================================
+
+    // Застосовуємо тільки перші 8 каналів (або 16, залежно від протоколу)
+    // ArduPilot ігнорує виклик, якщо значення UINT16_MAX.
+    // Якщо значення 0 - він знімає оверайд (що нам і треба для атаки).
+
+    for (uint8_t i = 0; i < 8; i++) {
+        if (target_override[i] != UINT16_MAX) {
+            RC_Channels::set_override(i, target_override[i], tnow);
+        }
+    }
+
+    // Обробка каналів 9-16 (якщо є)
+    for (uint8_t i = 8; i < 16; i++) {
+        if (target_override[i] != 0 && target_override[i] != UINT16_MAX) {
+            // Для AUX каналів 0 може означати "немає даних", тому обережніше
+            // Але якщо ви хочете передавати AUX в режимі атаки - залиште як є.
+            const uint16_t val = (target_override[i] == (UINT16_MAX-1)) ? 0 : target_override[i];
+            RC_Channels::set_override(i, val, tnow);
+        }
+    }
+
+    // Оновлюємо "сторожовий таймер" GCS failsafe
     gcs().sysid_myggcs_seen(tnow);
-
 }
 
 #if AP_OPTICALFLOW_ENABLED
