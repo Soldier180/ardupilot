@@ -2,7 +2,9 @@ name: Build MatekH743 DCM Copter
 
 on:
   workflow_dispatch:
-
+  push:
+    branches:
+      - ArduCopter-4.6.2-MolfarRCoverride-DCM
 jobs:
   build:
     runs-on: ubuntu-22.04
