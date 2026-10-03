@@ -153,7 +153,7 @@ const AP_Param::GroupInfo AP_AHRS::var_info[] = {
     // @Param: EKF_TYPE
     // @DisplayName: Use NavEKF Kalman filter for attitude and position estimation
     // @Description: This controls which NavEKF Kalman filter version is used for attitude and position estimation
-    // @Values: 0:Disabled,2:Enable EKF2,3:Enable EKF3,11:ExternalAHRS
+    // @Values: 0:DCM,2:Enable EKF2,3:Enable EKF3,11:ExternalAHRS
     // @User: Advanced
     AP_GROUPINFO("EKF_TYPE",  14, AP_AHRS, _ekf_type, HAL_AHRS_EKF_TYPE_DEFAULT),
 
@@ -208,8 +208,9 @@ AP_AHRS::AP_AHRS(uint8_t flags) :
     // load default values from var_info table
     AP_Param::setup_object_defaults(this, var_info);
 
-#if APM_BUILD_COPTER_OR_HELI || APM_BUILD_TYPE(APM_BUILD_ArduSub)
-    // Copter and Sub force the use of EKF
+#if APM_BUILD_TYPE(APM_BUILD_ArduSub)
+    // Sub continues to force EKF.
+    // Copter is allowed to select DCM using AHRS_EKF_TYPE=0.
     _ekf_flags |= AP_AHRS::FLAG_ALWAYS_USE_EKF;
 #endif
     state.dcm_matrix.identity();
