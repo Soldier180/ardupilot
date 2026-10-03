@@ -1,0 +1,53 @@
+name: Build MatekH743 DCM Copter
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      TZ: Europe/Kyiv
+      SKIP_AP_GIT_CHECK: 1
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install ArduPilot prerequisites
+        shell: bash
+        run: |
+          Tools/environment_install/install-prereqs-ubuntu.sh -y
+
+      - name: Build ArduCopter for MatekH743
+        shell: bash
+        run: |
+          source ~/.profile || true
+          source ~/.bashrc || true
+          source "$HOME/venv-ardupilot/bin/activate" || true
+
+          export PATH="$HOME/.local/bin:$PATH"
+
+          ./waf configure --board MatekH743
+          ./waf copter
+
+      - name: Show build output
+        shell: bash
+        run: |
+          ls -lah build/MatekH743/bin/
+
+      - name: Upload MatekH743 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: ArduCopter-4.6.2-MolfarRCoverride-DCM-MatekH743
+          path: |
+            build/MatekH743/bin/arducopter.apj
+            build/MatekH743/bin/arducopter.bin
+            build/MatekH743/bin/arducopter.elf
+          if-no-files-found: error
